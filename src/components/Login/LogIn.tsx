@@ -1,42 +1,53 @@
-import { useState } from "react";
-import "./LogInStyle.css"
+import { useState, useEffect } from "react";
+import "./LogInStyle.css";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged
+} from "firebase/auth";
+
+import { auth } from "../../firebase.ts";
+import { useNavigate } from "react-router-dom";
 
 function LogIn() {
-  const [email, emailUpdate] = useState("");
-  const [password, passwordUpdate] = useState("");
-  const [text, textUpdate] = useState("");
+  const navigate = useNavigate();
+  useEffect(() => {
+    onAuthStateChanged(auth, (userData) => {
+      if (userData){
+          navigate(`/menu/${userData?.displayName}`);
+      }
+
+    });
+  }, []);
+  const [loading, setLoading] = useState(false);
+  //auth.currentUser?.displayName
+  const handleGoogle = async () => {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+
+      console.log("Usuário logado com Google: ", result.user);
+    } catch (Err) {
+      console.error("Erro no login com Google:", Err);
+    } finally {
+      setLoading(false)
+    }
+  };
   return (
     <>
-    <h1 className="LogInMenu">Log in</h1>
-    <div className="LogInMenu" id="items-login">
-      <input className="LogInMenu"
-        type="email"
-        onChange={(E) => {
-          emailUpdate(E.target.value);
-        }}
-        ></input>
-      <br></br>
-      <input type="password" className="password-input LogInMenu" onChange={(E) => passwordUpdate(E.target.value)}></input>
-      <br></br>
-      <button 
-        type="button"
-        onClick={() => {
-          if(email != "" && email != null){
-          window.open(`/menu/${email}`, "_self")
-          }
-            else {
-              textUpdate("Invalid account!");
-            }
-          } 
-        }
-        className="btn btn-primary LogInMenu"
+      <h1 className="LogInMenu">Log in</h1>
+      <div className="LogInMenu" id="items-login">
+        <button
+          type="button"
+          onClick={handleGoogle}
+          disabled={loading}
+          className="btn btn-primary LogInMenu"
         >
-        Log in
-      </button>
-      <p className="LogInMenu">{text}</p>
-        </div>
-          </>
-
+          Log in with Google
+        </button>
+      </div>
+    </>
   );
 }
 
